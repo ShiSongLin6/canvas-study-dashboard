@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7fb">
+  <title>Canvas 学习看板</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/improvements.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Canvas 学习看板首页">
+        <span class="brand-mark">C</span>
+        <span><strong>Canvas 学习看板</strong><small>把课程与截止日期放在一处</small></span>
+      </a>
+      <div class="top-actions">
+        <span class="live-pill"><i></i> <span id="connectionModeLabel">本机 Canvas 连接</span></span>
+        <button class="button connection-entry" id="connectPanelButton" type="button">设置 / 修复 Canvas 连接</button>
+        <button class="button button-quiet" id="refreshButton" type="button"><span class="refresh-icon">↻</span> 刷新 Canvas</button>
+      </div>
+    </header>
+
+    <section class="welcome-row">
+      <div>
+        <p class="eyebrow">你的课程，一目了然</p>
+        <h1>今天的学习进度</h1>
+        <p class="subhead">Canvas 状态会定时同步；已结束课程、无截止日期和历史任务会单独收纳。</p>
+      </div>
+      <div class="sync-card"><span class="sync-dot" id="syncDot"></span><div><small>最近同步</small><strong id="syncTime">正在连接 Canvas…</strong></div></div>
+    </section>
+
+    <div class="notice" id="notice" role="status" hidden>
+      <span id="noticeText"></span>
+      <button class="notice-action" id="noticeRepairButton" type="button" hidden>打开连接修复</button>
+    </div>
+
+    <section class="connection-panel" id="connectionPanel" aria-labelledby="connectionTitle" hidden>
+      <div class="connection-heading">
+        <div><p class="eyebrow">本机连接设置</p><h2 id="connectionTitle">连接 Canvas</h2></div>
+        <button class="text-button connection-close" id="closeConnectionButton" type="button">收起</button>
+      </div>
+      <p class="connection-help">在这里直接粘贴 Canvas 地址和 Access Token。页面会把 Token 发送给本机看板服务验证，并优先保存到 Windows 凭证管理器。</p>
+      <form id="connectionForm" class="connection-form">
+        <label class="connection-field" for="canvasUrl">Canvas 地址<input id="canvasUrl" type="url" placeholder="https://canvas.yourschool.edu" autocomplete="url" required></label>
+        <label class="connection-field" for="canvasToken">Canvas Access Token<input id="canvasToken" type="text" maxlength="4096" placeholder="粘贴 Token" autocomplete="off" autocapitalize="off" spellcheck="false" required></label>
+        <label class="session-option" for="sessionOnly"><input id="sessionOnly" type="checkbox"><span><strong>只连接到本次看板运行</strong><small>如果 Windows 凭证管理器保存失败，可勾选此项。Token 只留在服务内存，停止或重启看板后需要重新输入。</small></span></label>
+        <div class="connection-actions"><button class="button connection-submit" id="connectSubmit" type="submit">验证并连接</button><span id="connectionStatus" role="status" aria-live="polite"></span></div>
+      </form>
+    </section>
+
+    <section class="stats-grid" aria-label="任务概况">
+      <article class="stat-card stat-blue"><div class="stat-icon">◷</div><span>待完成</span><strong id="pendingCount">—</strong><small>有截止日期且尚未提交</small></article>
+      <article class="stat-card stat-rose"><div class="stat-icon">!</div><span>已逾期</span><strong id="overdueCount">—</strong><small>截止时间已过，仍未提交</small></article>
+      <article class="stat-card stat-green"><div class="stat-icon">✓</div><span>已完成</span><strong id="completedCount">—</strong><small>Canvas 中已提交或已评分</small></article>
+      <article class="stat-card stat-violet"><div class="stat-icon">▤</div><span>当前课程</span><strong id="courseCount">—</strong><small>已结束课程可单独查看</small></article>
+    </section>
+
+    <section class="content-grid">
+      <div class="main-column">
+        <section class="panel task-panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">课程任务</p><h2>作业与截止日期</h2></div>
+            <div class="task-controls">
+              <button class="text-button ended-toggle" id="endedToggle" type="button" aria-expanded="false" hidden></button>
+              <label class="select-wrap"><span class="sr-only">按课程筛选</span><select id="courseFilter"><option value="all">所有课程</option></select><span class="select-chevron">⌄</span></label>
+            </div>
+          </div>
+          <div class="filter-row" role="tablist" aria-label="任务筛选">
+            <button class="filter-chip active" data-filter="all" role="tab" aria-selected="true">全部 <b id="allTabCount">0</b></button>
+            <button class="filter-chip" data-filter="pending" role="tab" aria-selected="false">待完成 <b id="pendingTabCount">0</b></button>
+            <button class="filter-chip" data-filter="overdue" role="tab" aria-selected="false">已逾期 <b id="overdueTabCount">0</b></button>
+            <button class="filter-chip" data-filter="completed" role="tab" aria-selected="false">已完成 <b id="completedTabCount">0</b></button>
+            <button class="filter-chip" data-filter="undated" role="tab" aria-selected="false">无截止 <b id="undatedTabCount">0</b></button>
+            <button class="filter-chip" data-filter="manual" role="tab" aria-selected="false">线下确认 <b id="manualTabCount">0</b></button>
+            <button class="filter-chip" data-filter="historical" role="tab" aria-selected="false">历史任务 <b id="historicalTabCount">0</b></button>
+          </div>
+          <div class="task-list" id="taskList"><div class="loading-state"><span class="loader"></span>正在读取你的课程任务…</div></div>
+          <div class="panel-foot" id="manualNote" hidden></div>
+        </section>
+      </div>
+
+      <aside class="side-column">
+        <section class="panel focus-panel">
+          <div class="panel-heading compact"><div><p class="eyebrow">按截止日期排序</p><h2>未来一周优先事项</h2></div><span class="week-icon">✦</span></div>
+          <div class="focus-list" id="focusList"><div class="muted-empty">同步后显示近期任务。</div></div>
+        </section>
+        <section class="panel plan-panel">
+          <div class="panel-heading compact"><div><p class="eyebrow">只保存在这台电脑</p><h2>个人学习清单</h2></div><span class="plan-date">本机保存</span></div>
+          <p class="plan-hint">清单会持续保留；勾选或删除只影响本机记录，不会更改 Canvas 提交状态。</p>
+          <form class="add-task-form" id="addTaskForm"><label class="sr-only" for="newTask">添加学习事项</label><input id="newTask" maxlength="160" placeholder="添加一个学习事项…" autocomplete="off"><button type="submit" aria-label="添加">＋</button></form>
+          <ul class="local-task-list" id="localTaskList"><li class="muted-empty">正在读取本地清单…</li></ul>
+          <div class="plan-foot"><span id="planProgress">0 项已完成</span><button id="clearDoneButton" class="text-button" type="button">清除已完成</button></div>
+        </section>
+        <section class="privacy-note"><span>⌑</span><p><strong>连接方式由你选择</strong><br>默认保存到 Windows 凭证管理器；也可选择只在本次看板服务运行期间保存在内存。页面不会把 Token 写入浏览器存储或项目文件。</p></section>
+      </aside>
+    </section>
+    <footer class="footer"><span>本地看板 · Canvas 数据读取自学校系统</span><span id="autoRefreshLabel">页面打开时每 3 分钟同步一次</span></footer>
+  </main>
+</body>
+</html>

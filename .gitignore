@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local shortcuts and user data
+*.url
+study_tasks.json
+
+# Secrets and local configuration
+.env
+.env.*
+!example.env
+*.token
