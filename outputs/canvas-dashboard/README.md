@@ -45,6 +45,10 @@ Canvas API 可能因课程权限、学校配置、网络或 Token 过期而返�
 
 ## 依赖与致谢
 
-本项目是一个独立的本机学习看板界面。它通过开源项目 [Canvas Study Assistant Skill](https://github.com/hairoom/canvas-study-assistant-skill) 连接 Canvas API、验证和保存用户自己的 Token，以及读取课程、作业和提交状态。
+本项目是一个独立的本机学习看板界面。它通过开源项目 [Canvas Study Assistant Skill](https://github.com/hairoom/canvas-study-assistant-skill) 提供 Canvas 数据连接。该 Skill 负责：
+
+- 连接 Canvas API。
+- 验证和保存用户自己的 Token。
+- 读取课程、作业和提交状态。
 
 Canvas Study Assistant Skill 由社区开发者维护，采用 [MIT License](https://github.com/hairoom/canvas-study-assistant-skill/blob/main/LICENSE)；它不是本项目创建的，也不是 Codex 内置功能。
